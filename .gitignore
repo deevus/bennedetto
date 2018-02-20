@@ -6,3 +6,5 @@ node_modules
 .grunt
 _SpecRunner.html
 .tern-port
+static/fonts/
+static/vendor*

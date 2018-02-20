@@ -1,35 +1,33 @@
-FROM python:3.4-slim
+FROM node
+COPY . /usr/src/app
+WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y \
+RUN yarn && \
+    yarn global add grunt-cli && \
+    grunt build
+
+FROM python:3.4-slim
+ENV DJANGO_VERSION 1.9
+COPY requirements /usr/src/app/requirements
+COPY --from=0 /usr/src/app /usr/src/app
+WORKDIR /usr/src/app
+
+RUN mkdir -p /usr/share/man/man1 /usr/share/man/man7 && \
+    apt-get update && \
+    apt-get install -y \
     gcc \
     gettext \
     mysql-client libmysqlclient-dev \
     postgresql-client libpq-dev \
     sqlite3 \
-    \
     bzip2 \
     fontconfig \
     libfreetype6-dev \
-    nodejs npm \
-    \
-  --no-install-recommends && rm -rf /var/lib/apt/lists/*
-
-ENV DJANGO_VERSION 1.9
-
-RUN pip install mysqlclient psycopg2 django=="$DJANGO_VERSION"
-
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
-COPY requirements /usr/src/app/requirements
-RUN pip install --no-cache-dir -r requirements/dev.txt
-
-COPY . /usr/src/app
-
-RUN ln -s /usr/bin/nodejs /usr/bin/node && \
-    npm install && \
-    npm install -g grunt-cli && \
-    grunt build
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install mysqlclient psycopg2 django=="$DJANGO_VERSION" && \
+    mkdir -p /usr/src/app && \
+    pip install --no-cache-dir -r requirements/dev.txt
 
 RUN python manage.py migrate
 
